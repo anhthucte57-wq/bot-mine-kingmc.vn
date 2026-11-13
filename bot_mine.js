@@ -1,52 +1,42 @@
 const mineflayer = require('mineflayer');
 const express = require('express');
-const axios = require('axios');
 
 const app = express();
 app.use(express.json());
 
 // ==========================================
-// CẤU HÌNH CỦA BẠN (SỬA ĐÚNG CÁC CHỖ NÀY)
+// CẤU HÌNH CỦA BẠN (SỬA CÁC DÒNG NÀY)
 // ==========================================
-const SERVER_HOST = 'sgp.kingmc.vn';
+const SERVER_HOST = 'sgp.kingmc.vn'; // Đã đổi sang IP của Java Edition
 const SERVER_PORT = 25565;
-const BOT_USERNAME = 'Pumtrummod';
-const PASSWORD = 'manhne11'; // Sửa lại mật khẩu thật
+const BOT_USERNAME = 'Pumtrummod'; 
+const PASSWORD = 'manhne11'; 
 
-// Thông tin VPS của bạn (nơi chạy bot Discord)
-const DISCORD_API_URL = "http://ord-804768-2261.cldcode.host:24950/api/game_payment";
+// ✅ SỬA LỖI: Đổi phiên bản cho khớp với KingMC
+const BOT_VERSION = '1.21.4'; 
+const AUTH_MODE = 'offline'; 
 
 // ✅ BẢO MẬT: Phải khớp với API_KEY bên file Discord
 const API_KEY = process.env.API_KEY || "mat_khau_bao_mat_123"; 
 
-// ✅ Phiên bản server KingMC (Fabric 1.21.1)
-const BOT_VERSION = '1.21.11';
-const AUTH_MODE = 'offline'; // Đổi thành 'microsoft' nếu là server chính thức
-const LOGIN_COMMAND = `/dn ${PASSWORD}`; // Kiểm tra lại lệnh login của KingMC
-
 // ==========================================
-// BIẾN TOÀN CỤC
+// KHỞI TẠO & LOGIC CHÍNH
 // ==========================================
-let globalBot = null;
+let globalBot = null; 
 let isInMainServer = false;
-let joinAttempt = 0;
-let hasLoggedIn = false;
+let joinAttempt = 0; 
+let hasLoggedIn = false; 
 let afkInterval = null;
-let reconnectTimer = null;
 
-// ==========================================
-// HÀM KHỞI TẠO BOT
-// ==========================================
 function startBot() {
-  if (reconnectTimer) clearTimeout(reconnectTimer);
   if (afkInterval) clearInterval(afkInterval);
 
   joinAttempt++;
-  hasLoggedIn = false;
-  isInMainServer = false;
-
-  console.log(`\n🔄 [LẦN ${joinAttempt}] Đang kết nối vào ${SERVER_HOST}:${SERVER_PORT} (v${BOT_VERSION})...`);
-
+  hasLoggedIn = false; 
+  isInMainServer = false; 
+  
+  console.log(`\n🔄 [LẦN ${joinAttempt}] Đang kết nối vào ${SERVER_HOST} (v${BOT_VERSION})...`);
+  
   const bot = mineflayer.createBot({
     host: SERVER_HOST,
     port: SERVER_PORT,
@@ -55,9 +45,11 @@ function startBot() {
     auth: AUTH_MODE,
     hideErrors: true,
     checkTimeoutInterval: 120000,
+    // Giả lập User-Agent của Minecraft Java để qua mặt anti-bot
+    clientVersion: BOT_VERSION,
   });
-
-  globalBot = bot;
+  
+  globalBot = bot; 
 
   bot.on('error', (err) => {
     if (err.code !== 'ECONNRESET') console.log(`[LỖI] ${err.message}`);
@@ -65,124 +57,116 @@ function startBot() {
 
   bot.on('spawn', () => {
     console.log(`✅ [LẦN ${joinAttempt}] Đã vào sảnh chờ!`);
-
+    
     if (joinAttempt === 1) {
-      console.log(`⏳ [CHỐNG BOT] Tự động out sau 3 giây...`);
-      setTimeout(() => { bot.quit(); }, 3000);
-      return;
+      // Lần đầu tiên: Đợi 6 giây rồi tự out để lách anti-bot
+      console.log(`⏳ [CHỐNG BOT] Đang ở bảng xác nhận. Tự động out sau 6 giây...`);
+      setTimeout(() => {
+        console.log(`🚪 Tự động ngắt kết nối (Quit).`);
+        bot.quit(); 
+      }, 6000); 
+    } else {
+      if (hasLoggedIn) return;
+      hasLoggedIn = true;
+
+      // Đăng nhập sau 3 giây
+      setTimeout(() => {
+        console.log(`[AUTH] Gửi lệnh đăng nhập: /dn ${PASSWORD}`);
+        bot.chat(`/dn ${PASSWORD}`);
+      }, 3000);
+
+      // Mở menu sau 8 giây
+      setTimeout(() => {
+        if (!isInMainServer) {
+          console.log(`[GUI] Đang chọn ô đồng hồ (ô thứ 5) để mở Menu...`);
+          try {
+            bot.setQuickBarSlot(4); 
+            bot.activateItem(); 
+          } catch(e) {}
+        }
+      }, 8000);
     }
-
-    if (hasLoggedIn) return;
-    hasLoggedIn = true;
-
-    setTimeout(() => {
-      console.log(`[AUTH] Đang gửi lệnh đăng nhập...`);
-      bot.chat(LOGIN_COMMAND);
-    }, 2000);
-
-    setTimeout(() => {
-      if (!isInMainServer) {
-        console.log(`[GUI] Đang chọn ô đồng hồ (ô thứ 5) để mở Menu...`);
-        try {
-          bot.setQuickBarSlot(4);
-          bot.activateItem();
-        } catch (e) { console.log(`[GUI LỖI] ${e.message}`); }
-      }
-    }, 6000);
   });
 
   bot.on('windowOpen', (window) => {
+    let titleStr = "";
+    try {
+      if (typeof window.title === 'string') titleStr = window.title;
+      else titleStr = JSON.stringify(window.title);
+    } catch (e) { titleStr = "Unknown"; }
+    
+    console.log(`[GUI] Đã mở bảng: ${titleStr}`);
+    
     if (!isInMainServer) {
       setTimeout(() => {
-        console.log(`[GUI] Đang click ô 25 để vào KingSMP...`);
+        const slotToClick = 24; 
         try {
-          bot.clickWindow(24, 0, 0);
-          isInMainServer = true;
+          bot.clickWindow(slotToClick, 0, 0);
+          console.log(`[GUI] Đã click ô 25 để vào KingSMP!`);
+          isInMainServer = true; 
           console.log(`✅ [MAIN] Đã vào KingSMP! Sẵn sàng nhận lệnh /pay.`);
-        } catch (e) { console.log(`[GUI CLICK LỖI] ${e.message}`); }
-      }, 1000);
-    }
-  });
-
-  // Lắng nghe tin nhắn chat để bắt tiền vào
-  bot.on('message', async (jsonMsg) => {
-    const msg = jsonMsg.toString();
-    if (msg.includes("Bạn nhận được") && msg.includes("từ")) {
-      console.log(`💰 [TIỀN VÀO] ${msg}`);
-      try {
-        await axios.post(DISCORD_API_URL, { message: msg });
-        console.log(`[API] Đã gửi thông tin về Discord.`);
-      } catch (error) { console.log(`❌ [API LỖI] ${error.message}`); }
+        } catch (e) {
+          console.log(`[LỖI] Không click được: ${e}`);
+        }
+      }, 1500); // Đợi 1.5s cho chắc
     }
   });
 
   bot.on('kicked', (reason) => {
-    console.log(`❌ Bot bị đá. Lý do: ${JSON.stringify(reason)}`);
+    let r = reason;
+    try { r = JSON.stringify(reason); } catch (e) {}
+    console.log(`❌ Bot bị đá. Lý do: ${r}`);
   });
 
   bot.on('end', (reason) => {
     console.log(`❌ Bot ngắt kết nối. Lý do: ${reason}`);
     if (afkInterval) { clearInterval(afkInterval); afkInterval = null; }
-    console.log(`🔄 Thử kết nối lại sau 5 giây...`);
-    reconnectTimer = setTimeout(startBot, 5000);
+    
+    // ✅ SỬA LỖI ANTI-BOT: Tăng thời gian chờ lên 15 giây để tránh bị chặn
+    console.log(`🔄 Tự động kết nối lại sau 15 giây...`);
+    setTimeout(startBot, 15000); 
   });
-
-  // Chống AFK
+  
+  // Chống AFK (Nhảy nhẹ mỗi 30s)
   afkInterval = setInterval(() => {
     if (isInMainServer && bot.entity) {
       try {
         bot.setControlState('jump', true);
         setTimeout(() => { try { bot.setControlState('jump', false); } catch (e) {} }, 500);
-      } catch (e) {}
+      } catch(e) {}
     }
   }, 30000);
 }
 
+startBot();
+
 // ==========================================
-// API SERVER (NHẬN LỆNH TỪ BOT DISCORD)
+// API NHẬN LỆNH TỪ BOT DISCORD (TRẢ TIỀN)
 // ==========================================
 app.post('/pay', (req, res) => {
-  // 1. Kiểm tra API Key
   const authHeader = req.headers['authorization'];
   if (authHeader !== `Bearer ${API_KEY}`) {
     return res.status(401).send({ status: 'error', message: 'Sai API Key' });
   }
 
   const { ign, amount } = req.body;
-
-  if (!ign || !amount) {
-    return res.status(400).send({ status: 'error', message: 'Thiếu ign hoặc amount' });
-  }
-
   if (!isInMainServer || !globalBot) {
-    return res.status(400).send({ status: 'error', message: 'Bot chưa vào server' });
+    return res.status(400).send({ status: 'error', message: 'Bot chưa vào server chính' });
   }
-
+  
   try {
-    // Gõ lệnh pay vào game
     globalBot.chat(`/pay ${ign} ${amount}`);
-    console.log(`[PAY] Đã gõ lệnh: /pay ${ign} ${amount}`);
+    console.log(`[PAY] Đã gửi lệnh: /pay ${ign} ${amount}`);
     res.send({ status: 'success' });
   } catch (e) {
     res.status(500).send({ status: 'error', message: e.message });
   }
 });
 
-// Health check cho UptimeRobot/cron-job
 app.get('/', (req, res) => {
-  res.send({
-    status: 'ok',
-    botConnected: !!globalBot,
-    inMainServer: isInMainServer,
-    joinAttempt: joinAttempt,
-  });
+  res.send({ status: 'ok', botConnected: !!globalBot, inMainServer: isInMainServer });
 });
 
-// ==========================================
-// KHỞI ĐỘNG
-// ==========================================
 app.listen(process.env.PORT || 3000, () => {
   console.log('🌐 API Bot Mine đang chạy ở cổng ' + (process.env.PORT || 3000));
 });
-
-startBot();
