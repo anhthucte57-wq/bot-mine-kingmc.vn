@@ -7,7 +7,7 @@ app.use(express.json());
 // ==========================================
 // CẤU HÌNH CỦA BẠN (SỬA CÁC DÒNG NÀY)
 // ==========================================
-const SERVER_HOST = 'sgp.kingmc.vn'; 
+const SERVER_HOST = '50.114.4.7'; 
 const SERVER_PORT = 25565;
 const BOT_USERNAME = 'Pumtrummod'; 
 const PASSWORD = 'manhne11'; 
@@ -130,8 +130,8 @@ function startBot() {
     if (afkInterval) { clearInterval(afkInterval); afkInterval = null; }
     
     // Tăng thời gian chờ lên 15 giây để tránh bị anti-bot chặn
-    console.log(`🔄 Tự động kết nối lại sau 15 giây...`);
-    setTimeout(startBot, 15000); 
+    console.log(`🔄 Tự động kết nối lại sau 60 giây...`);
+    setTimeout(startBot, 60000); 
   });
   
   // Chống AFK
