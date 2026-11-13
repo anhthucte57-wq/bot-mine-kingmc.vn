@@ -7,13 +7,13 @@ app.use(express.json());
 // ==========================================
 // CẤU HÌNH CỦA BẠN (SỬA CÁC DÒNG NÀY)
 // ==========================================
-const SERVER_HOST = 'sgp.kingmc.vn'; // Đã đổi sang IP của Java Edition
+const SERVER_HOST = 'sgp.kingmc.vn'; 
 const SERVER_PORT = 25565;
 const BOT_USERNAME = 'Pumtrummod'; 
 const PASSWORD = 'manhne11'; 
 
-// ✅ SỬA LỖI: Đổi phiên bản cho khớp với KingMC
-const BOT_VERSION = '1.21.4'; 
+// ✅ Cập nhật phiên bản theo khuyến nghị của KingMC
+const BOT_VERSION = '1.21.11'; 
 const AUTH_MODE = 'offline'; 
 
 // ✅ BẢO MẬT: Phải khớp với API_KEY bên file Discord
@@ -45,11 +45,18 @@ function startBot() {
     auth: AUTH_MODE,
     hideErrors: true,
     checkTimeoutInterval: 120000,
-    // Giả lập User-Agent của Minecraft Java để qua mặt anti-bot
-    clientVersion: BOT_VERSION,
+    // ✅ BẢN VÁ LỖI SOCKETCLOSED: Tắt physics lúc kết nối
+    physicsEnabled: false, 
   });
   
   globalBot = bot; 
+
+  // ✅ Bật lại physics sau khi đã vào sảnh chờ thành công
+  bot.once('spawn', () => {
+    setTimeout(() => {
+      if (!bot._ended) bot.physicsEnabled = true;
+    }, 2000);
+  });
 
   bot.on('error', (err) => {
     if (err.code !== 'ECONNRESET') console.log(`[LỖI] ${err.message}`);
@@ -108,7 +115,7 @@ function startBot() {
         } catch (e) {
           console.log(`[LỖI] Không click được: ${e}`);
         }
-      }, 1500); // Đợi 1.5s cho chắc
+      }, 1500); 
     }
   });
 
@@ -122,12 +129,12 @@ function startBot() {
     console.log(`❌ Bot ngắt kết nối. Lý do: ${reason}`);
     if (afkInterval) { clearInterval(afkInterval); afkInterval = null; }
     
-    // ✅ SỬA LỖI ANTI-BOT: Tăng thời gian chờ lên 15 giây để tránh bị chặn
+    // Tăng thời gian chờ lên 15 giây để tránh bị anti-bot chặn
     console.log(`🔄 Tự động kết nối lại sau 15 giây...`);
     setTimeout(startBot, 15000); 
   });
   
-  // Chống AFK (Nhảy nhẹ mỗi 30s)
+  // Chống AFK
   afkInterval = setInterval(() => {
     if (isInMainServer && bot.entity) {
       try {
