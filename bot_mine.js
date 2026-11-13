@@ -7,13 +7,11 @@ app.use(express.json());
 // ==========================================
 // CẤU HÌNH CỦA BẠN (SỬA CÁC DÒNG NÀY)
 // ==========================================
-const SERVER_HOST = 'sgp.kingmc.vn'; // Bắt buộc dùng tên miền
+const SERVER_HOST = 'play.kingmc.vn'; // ✅ Đã sửa: Thêm chữ "play."
 const SERVER_PORT = 25565;
 const BOT_USERNAME = 'Pumtrummod'; 
 const PASSWORD = 'manhne11'; 
-
-// ✅ SỬA LỖI: Thử nghiệm phiên bản (nếu 1.21.11 vẫn lỗi, đổi thành 1.21.4)
-const BOT_VERSION = '1.21.11'; 
+const BOT_VERSION = '1.20.1'; // ✅ Đã sửa: Khớp với bot cũ
 const AUTH_MODE = 'offline'; 
 
 // ✅ BẢO MẬT: Phải khớp với API_KEY bên file Discord
@@ -45,15 +43,12 @@ function startBot() {
     auth: AUTH_MODE,
     hideErrors: true,
     checkTimeoutInterval: 120000,
-    
-    // ✅ BẢN VÁ QUAN TRỌNG: Vượt qua TCPShield và lỗi Physics
-    fakeHost: 'sgp.kingmc.vn', 
-    physicsEnabled: false, 
+    physicsEnabled: false, // ✅ Bản vá lỗi socketClosed
   });
   
   globalBot = bot; 
 
-  // Bật lại physics sau khi đã vào sảnh chờ thành công
+  // Bật lại physics sau khi vào sảnh chờ
   bot.once('spawn', () => {
     setTimeout(() => {
       if (!bot._ended) bot.physicsEnabled = true;
@@ -68,11 +63,11 @@ function startBot() {
     console.log(`✅ [LẦN ${joinAttempt}] Đã vào sảnh chờ!`);
     
     if (joinAttempt === 1) {
-      console.log(`⏳ [CHỐNG BOT] Đang ở bảng xác nhận. Tự động out sau 6 giây...`);
+      console.log(`⏳ [CHỐNG BOT] Đang ở bảng xác nhận. Tự động out sau 3 giây...`);
       setTimeout(() => {
         console.log(`🚪 Tự động ngắt kết nối (Quit).`);
         bot.quit(); 
-      }, 6000); 
+      }, 3000); 
     } else {
       if (hasLoggedIn) return;
       hasLoggedIn = true;
@@ -80,7 +75,7 @@ function startBot() {
       setTimeout(() => {
         console.log(`[AUTH] Gửi lệnh đăng nhập: /dn ${PASSWORD}`);
         bot.chat(`/dn ${PASSWORD}`);
-      }, 3000);
+      }, 2000);
 
       setTimeout(() => {
         if (!isInMainServer) {
@@ -90,7 +85,7 @@ function startBot() {
             bot.activateItem(); 
           } catch(e) {}
         }
-      }, 8000);
+      }, 6000);
     }
   });
 
@@ -110,11 +105,10 @@ function startBot() {
           bot.clickWindow(slotToClick, 0, 0);
           console.log(`[GUI] Đã click ô 25 để vào KingSMP!`);
           isInMainServer = true; 
-          console.log(`✅ [MAIN] Đã vào KingSMP! Sẵn sàng nhận lệnh /pay.`);
         } catch (e) {
           console.log(`[LỖI] Không click được: ${e}`);
         }
-      }, 1500); 
+      }, 1000);
     }
   });
 
@@ -128,9 +122,9 @@ function startBot() {
     console.log(`❌ Bot ngắt kết nối. Lý do: ${reason}`);
     if (afkInterval) { clearInterval(afkInterval); afkInterval = null; }
     
-    // ✅ TĂNG THỜI GIAN CHỜ LÊN 120 GIÂY (2 PHÚT) ĐỂ TRÁNH ANTI-BOT
-    console.log(`🔄 Tự động kết nối lại sau 120 giây...`);
-    setTimeout(startBot, 120000); 
+    // Tăng thời gian chờ lên 15 giây để tránh anti-bot
+    console.log(`🔄 Tự động kết nối lại sau 15 giây...`);
+    setTimeout(startBot, 15000); 
   });
   
   // Chống AFK
