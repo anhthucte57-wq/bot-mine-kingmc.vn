@@ -2,9 +2,9 @@
   "name": "bot-mine-kingmc",
   "version": "1.0.0",
   "description": "Bot Minecraft cho KingMC",
-  "main": "index.js",
+  "main": "bot_mine.js",
   "scripts": {
-    "start": "node index.js"
+    "start": "node bot_mine.js"
   },
   "dependencies": {
     "mineflayer": "^4.37.0",
