@@ -15,8 +15,7 @@ const BOT_VERSION = '1.20.1';
 
 // Địa chỉ VPS chạy Bot Discord của bạn
 const DISCORD_WEBHOOK_URL = "http://ord-804768-2261.cldcode.host:24950/api/game_payment";
-
-// ✅ BẢO MẬT: Phải khớp với API_KEY trong file bot.py (Discord)
+// API Key bảo mật (Phải khớp bên file bot.py)
 const API_KEY = process.env.API_KEY || "mat_khau_bao_mat_123"; 
 
 // ==========================================
@@ -97,8 +96,8 @@ function startBot() {
   bot.on('message', async (jsonMsg) => {
     const msg = jsonMsg.toString();
     
-    // Bắt đúng định dạng "Bạn đã chuyển cho _DTM $100" hoặc "Bạn nhận được"
-    if (msg.includes("Bạn đã chuyển cho") || msg.includes("Bạn nhận được")) {
+    // Bắt đúng định dạng "Bạn đã nhận được $1M từ BuilderSucVat"
+    if (msg.includes("Bạn đã nhận được") || msg.includes("Bạn nhận được")) {
       console.log(`💰 [TIỀN VÀO] ${msg}`);
       
       try {
@@ -132,35 +131,18 @@ function startBot() {
 
 startBot();
 
-// ==========================================
 // API RÚT TIỀN (TỪ BOT DISCORD GỌI SANG)
-// ==========================================
 app.post('/pay', (req, res) => {
   const authHeader = req.headers['authorization'];
-  if (authHeader !== `Bearer ${API_KEY}`) {
-    return res.status(401).send({ status: 'error', message: 'Sai API Key' });
-  }
-
+  if (authHeader !== `Bearer ${API_KEY}`) return res.status(401).send({ status: 'error', message: 'Sai API Key' });
   const { ign, amount } = req.body;
-  
-  if (!isInMainServer || !globalBot) {
-    return res.status(400).send({ status: 'error', message: 'Bot chưa vào server chính' });
-  }
-  
+  if (!isInMainServer || !globalBot) return res.status(400).send({ status: 'error', message: 'Bot chưa vào server chính' });
   try {
     globalBot.chat(`/pay ${ign} ${amount}`);
     console.log(`[PAY] Đã gửi lệnh: /pay ${ign} ${amount}`);
     res.send({ status: 'success' });
-  } catch (e) {
-    res.status(500).send({ status: 'error', message: e.message });
-  }
+  } catch (e) { res.status(500).send({ status: 'error', message: e.message }); }
 });
 
-// Health check (Giúp UptimeRobot ping giữ bot không bị ngủ)
-app.get('/', (req, res) => {
-  res.send({ status: 'ok', botConnected: !!globalBot, inMainServer: isInMainServer });
-});
-
-app.listen(process.env.PORT || 3000, () => {
-  console.log('🌐 API Bot Mine đang chạy ở cổng ' + (process.env.PORT || 3000));
-});
+app.get('/', (req, res) => res.send({ status: 'ok', botConnected: !!globalBot, inMainServer: isInMainServer }));
+app.listen(process.env.PORT || 3000, () => console.log('🌐 API chạy ở cổng ' + (process.env.PORT || 3000)));
