@@ -13,7 +13,7 @@ const BOT_USERNAME = 'Pumtrummod';
 const PASSWORD = 'manhne11'; 
 const BOT_VERSION = '1.20.1'; 
 
-// Địa chỉ VPS chạy Bot Discord của bạn
+// Địa chỉ VPS chạy Bot Discord của bạn (Sửa lại nếu link VPS thay đổi)
 const DISCORD_WEBHOOK_URL = "http://ord-804768-2261.cldcode.host:24950/api/game_payment";
 // API Key bảo mật khi Discord gọi sang Render rút tiền
 const API_KEY = process.env.API_KEY || "mat_khau_bao_mat_123"; 
@@ -75,14 +75,6 @@ function startBot() {
   });
 
   bot.on('windowOpen', (window) => {
-    let titleStr = "";
-    try {
-      if (typeof window.title === 'string') titleStr = window.title;
-      else titleStr = JSON.stringify(window.title);
-    } catch (e) { titleStr = "Unknown"; }
-    
-    console.log(`[GUI] Đã mở bảng: ${titleStr}`);
-    
     if (!isInMainServer) {
       setTimeout(() => {
         const slotToClick = 24; 
@@ -104,12 +96,11 @@ function startBot() {
   bot.on('message', async (jsonMsg) => {
     const msg = jsonMsg.toString();
     
-    // Nếu thấy thông báo có người chuyển tiền cho bot
-    if (msg.includes("Bạn nhận được") && msg.includes("từ")) {
+    // ✅ ĐÃ SỬA: Bắt đúng định dạng "Bạn đã chuyển cho Pumtrummod $100" trong ảnh
+    if (msg.includes("Bạn đã chuyển cho") || msg.includes("Bạn nhận được")) {
       console.log(`💰 [TIỀN VÀO] ${msg}`);
       
       try {
-        // Gửi thông báo về cho Bot Discord xử lý cộng PCoin
         await fetch(DISCORD_WEBHOOK_URL, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -164,7 +155,6 @@ app.post('/pay', (req, res) => {
   }
 });
 
-// Health check
 app.get('/', (req, res) => {
   res.send({ status: 'ok', botConnected: !!globalBot, inMainServer: isInMainServer });
 });
