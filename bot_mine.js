@@ -5,7 +5,7 @@ const app = express();
 app.use(express.json());
 
 // ==========================================
-// CẤU HÌNH CỦA BẠN (GIỮ NGUYÊN THEO BOT CŨ)
+// CẤU HÌNH CỦA BẠN (SỬA CÁC DÒNG NÀY)
 // ==========================================
 const SERVER_HOST = 'play.kingmc.vn'; 
 const SERVER_PORT = 25565;
@@ -13,9 +13,10 @@ const BOT_USERNAME = 'Pumtrummod';
 const PASSWORD = 'manhne11'; 
 const BOT_VERSION = '1.20.1'; 
 
-// Địa chỉ VPS chạy Bot Discord của bạn (Sửa lại nếu link VPS thay đổi)
+// Địa chỉ VPS chạy Bot Discord của bạn
 const DISCORD_WEBHOOK_URL = "http://ord-804768-2261.cldcode.host:24950/api/game_payment";
-// API Key bảo mật khi Discord gọi sang Render rút tiền
+
+// ✅ BẢO MẬT: Phải khớp với API_KEY trong file bot.py (Discord)
 const API_KEY = process.env.API_KEY || "mat_khau_bao_mat_123"; 
 
 // ==========================================
@@ -91,12 +92,12 @@ function startBot() {
   });
 
   // ==========================================
-  // NHIỆM VỤ 1: BẮT TIN NHẮN NẠP PCOIN QUA GAME
+  // BẮT TIN NHẮN NẠP PCOIN QUA GAME
   // ==========================================
   bot.on('message', async (jsonMsg) => {
     const msg = jsonMsg.toString();
     
-    // ✅ ĐÃ SỬA: Bắt đúng định dạng "Bạn đã chuyển cho Pumtrummod $100" trong ảnh
+    // Bắt đúng định dạng "Bạn đã chuyển cho _DTM $100" hoặc "Bạn nhận được"
     if (msg.includes("Bạn đã chuyển cho") || msg.includes("Bạn nhận được")) {
       console.log(`💰 [TIỀN VÀO] ${msg}`);
       
@@ -132,7 +133,7 @@ function startBot() {
 startBot();
 
 // ==========================================
-// NHIỆM VỤ 2: API RÚT TIỀN (TỪ BOT DISCORD GỌI SANG)
+// API RÚT TIỀN (TỪ BOT DISCORD GỌI SANG)
 // ==========================================
 app.post('/pay', (req, res) => {
   const authHeader = req.headers['authorization'];
@@ -155,6 +156,7 @@ app.post('/pay', (req, res) => {
   }
 });
 
+// Health check (Giúp UptimeRobot ping giữ bot không bị ngủ)
 app.get('/', (req, res) => {
   res.send({ status: 'ok', botConnected: !!globalBot, inMainServer: isInMainServer });
 });
