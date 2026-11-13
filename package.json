@@ -1,13 +1,13 @@
 {
   "name": "bot-mine-kingmc",
   "version": "1.0.0",
-  "description": "Bot Minecraft cho KingMC - nhận lệnh /pay qua API",
+  "description": "Bot Minecraft cho KingMC",
   "main": "index.js",
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-  "mineflayer": "^4.27.0"
+    "mineflayer": "^4.37.0",
     "express": "^4.19.2",
     "axios": "^1.7.7"
   },
