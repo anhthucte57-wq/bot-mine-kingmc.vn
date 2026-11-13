@@ -5,16 +5,17 @@ const app = express();
 app.use(express.json());
 
 // ==========================================
-// CẤU HÌNH CỦA BẠN (SỬA CÁC DÒNG NÀY)
+// CẤU HÌNH CỦA BẠN (GIỮ NGUYÊN THEO BOT CŨ)
 // ==========================================
-const SERVER_HOST = 'play.kingmc.vn'; // ✅ Đã sửa: Thêm chữ "play."
+const SERVER_HOST = 'play.kingmc.vn'; 
 const SERVER_PORT = 25565;
 const BOT_USERNAME = 'Pumtrummod'; 
 const PASSWORD = 'manhne11'; 
-const BOT_VERSION = '1.20.1'; // ✅ Đã sửa: Khớp với bot cũ
-const AUTH_MODE = 'offline'; 
+const BOT_VERSION = '1.20.1'; 
 
-// ✅ BẢO MẬT: Phải khớp với API_KEY bên file Discord
+// Địa chỉ VPS chạy Bot Discord của bạn
+const DISCORD_WEBHOOK_URL = "http://ord-804768-2261.cldcode.host:24950/api/game_payment";
+// API Key bảo mật khi Discord gọi sang Render rút tiền
 const API_KEY = process.env.API_KEY || "mat_khau_bao_mat_123"; 
 
 // ==========================================
@@ -24,36 +25,22 @@ let globalBot = null;
 let isInMainServer = false;
 let joinAttempt = 0; 
 let hasLoggedIn = false; 
-let afkInterval = null;
 
 function startBot() {
-  if (afkInterval) clearInterval(afkInterval);
-
   joinAttempt++;
   hasLoggedIn = false; 
-  isInMainServer = false; 
-  
-  console.log(`\n🔄 [LẦN ${joinAttempt}] Đang kết nối vào ${SERVER_HOST} (v${BOT_VERSION})...`);
+  console.log(`\n🔄 [LẦN ${joinAttempt}] Đang kết nối vào server...`);
   
   const bot = mineflayer.createBot({
     host: SERVER_HOST,
     port: SERVER_PORT,
     username: BOT_USERNAME,
     version: BOT_VERSION,
-    auth: AUTH_MODE,
     hideErrors: true,
-    checkTimeoutInterval: 120000,
-    physicsEnabled: false, // ✅ Bản vá lỗi socketClosed
+    checkTimeoutInterval: 120000
   });
   
   globalBot = bot; 
-
-  // Bật lại physics sau khi vào sảnh chờ
-  bot.once('spawn', () => {
-    setTimeout(() => {
-      if (!bot._ended) bot.physicsEnabled = true;
-    }, 2000);
-  });
 
   bot.on('error', (err) => {
     if (err.code !== 'ECONNRESET') console.log(`[LỖI] ${err.message}`);
@@ -80,10 +67,8 @@ function startBot() {
       setTimeout(() => {
         if (!isInMainServer) {
           console.log(`[GUI] Đang chọn ô đồng hồ (ô thứ 5) để mở Menu...`);
-          try {
-            bot.setQuickBarSlot(4); 
-            bot.activateItem(); 
-          } catch(e) {}
+          bot.setQuickBarSlot(4); 
+          bot.activateItem(); 
         }
       }, 6000);
     }
@@ -105,6 +90,7 @@ function startBot() {
           bot.clickWindow(slotToClick, 0, 0);
           console.log(`[GUI] Đã click ô 25 để vào KingSMP!`);
           isInMainServer = true; 
+          console.log(`✅ [MAIN] Đã vào KingSMP! Sẵn sàng Nạp/Rút.`);
         } catch (e) {
           console.log(`[LỖI] Không click được: ${e}`);
         }
@@ -112,28 +98,42 @@ function startBot() {
     }
   });
 
-  bot.on('kicked', (reason) => {
-    let r = reason;
-    try { r = JSON.stringify(reason); } catch (e) {}
-    console.log(`❌ Bot bị đá. Lý do: ${r}`);
+  // ==========================================
+  // NHIỆM VỤ 1: BẮT TIN NHẮN NẠP PCOIN QUA GAME
+  // ==========================================
+  bot.on('message', async (jsonMsg) => {
+    const msg = jsonMsg.toString();
+    
+    // Nếu thấy thông báo có người chuyển tiền cho bot
+    if (msg.includes("Bạn nhận được") && msg.includes("từ")) {
+      console.log(`💰 [TIỀN VÀO] ${msg}`);
+      
+      try {
+        // Gửi thông báo về cho Bot Discord xử lý cộng PCoin
+        await fetch(DISCORD_WEBHOOK_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: msg })
+        });
+        console.log(`[API] Đã báo tiền nạp về Discord.`);
+      } catch (error) {
+        console.log(`❌ [API LỖI] Không gửi được webhook: ${error.message}`);
+      }
+    }
   });
 
   bot.on('end', (reason) => {
     console.log(`❌ Bot ngắt kết nối. Lý do: ${reason}`);
-    if (afkInterval) { clearInterval(afkInterval); afkInterval = null; }
-    
-    // Tăng thời gian chờ lên 15 giây để tránh anti-bot
-    console.log(`🔄 Tự động kết nối lại sau 15 giây...`);
-    setTimeout(startBot, 15000); 
+    if (joinAttempt === 1 || !isInMainServer) {
+      console.log(`🔄 Tự động kết nối lại...`);
+      setTimeout(startBot, 3000); 
+    }
   });
   
-  // Chống AFK
-  afkInterval = setInterval(() => {
+  setInterval(() => {
     if (isInMainServer && bot.entity) {
-      try {
-        bot.setControlState('jump', true);
-        setTimeout(() => { try { bot.setControlState('jump', false); } catch (e) {} }, 500);
-      } catch(e) {}
+      bot.setControlState('jump', true);
+      setTimeout(() => bot.setControlState('jump', false), 500);
     }
   }, 30000);
 }
@@ -141,7 +141,7 @@ function startBot() {
 startBot();
 
 // ==========================================
-// API NHẬN LỆNH TỪ BOT DISCORD (TRẢ TIỀN)
+// NHIỆM VỤ 2: API RÚT TIỀN (TỪ BOT DISCORD GỌI SANG)
 // ==========================================
 app.post('/pay', (req, res) => {
   const authHeader = req.headers['authorization'];
@@ -150,6 +150,7 @@ app.post('/pay', (req, res) => {
   }
 
   const { ign, amount } = req.body;
+  
   if (!isInMainServer || !globalBot) {
     return res.status(400).send({ status: 'error', message: 'Bot chưa vào server chính' });
   }
@@ -163,6 +164,7 @@ app.post('/pay', (req, res) => {
   }
 });
 
+// Health check
 app.get('/', (req, res) => {
   res.send({ status: 'ok', botConnected: !!globalBot, inMainServer: isInMainServer });
 });
