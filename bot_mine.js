@@ -7,7 +7,7 @@ app.use(express.json());
 // ==========================================
 // CẤU HÌNH CỦA BẠN (SỬA CÁC DÒNG NÀY)
 // ==========================================
-const SERVER_HOST = '50.114.4.7'; 
+const SERVER_HOST = 'sgp.kingmc.vn';
 const SERVER_PORT = 25565;
 const BOT_USERNAME = 'Pumtrummod'; 
 const PASSWORD = 'manhne11'; 
