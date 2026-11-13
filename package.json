@@ -7,7 +7,7 @@
     "start": "node index.js"
   },
   "dependencies": {
-    "mineflayer": "^4.23.0",
+  "mineflayer": "^4.27.0"
     "express": "^4.19.2",
     "axios": "^1.7.7"
   },
