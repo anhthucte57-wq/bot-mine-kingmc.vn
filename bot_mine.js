@@ -8,7 +8,7 @@ app.use(express.json());
 // ==========================================
 // CẤU HÌNH CỦA BẠN (SỬA ĐÚNG CÁC CHỖ NÀY)
 // ==========================================
-const SERVER_HOST = 'kingmc.vn';
+const SERVER_HOST = 'sgp.kingmc.vn';
 const SERVER_PORT = 25565;
 const BOT_USERNAME = 'Pumtrummod';
 const PASSWORD = 'manhne11'; // Sửa lại mật khẩu thật
@@ -20,7 +20,7 @@ const DISCORD_API_URL = "http://ord-804768-2261.cldcode.host:24950/api/game_paym
 const API_KEY = process.env.API_KEY || "mat_khau_bao_mat_123"; 
 
 // ✅ Phiên bản server KingMC (Fabric 1.21.1)
-const BOT_VERSION = '1.21.1';
+const BOT_VERSION = '1.21.11';
 const AUTH_MODE = 'offline'; // Đổi thành 'microsoft' nếu là server chính thức
 const LOGIN_COMMAND = `/dn ${PASSWORD}`; // Kiểm tra lại lệnh login của KingMC
 
