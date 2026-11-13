@@ -7,12 +7,12 @@ app.use(express.json());
 // ==========================================
 // CẤU HÌNH CỦA BẠN (SỬA CÁC DÒNG NÀY)
 // ==========================================
-const SERVER_HOST = 'sgp.kingmc.vn';
+const SERVER_HOST = 'sgp.kingmc.vn'; // Bắt buộc dùng tên miền
 const SERVER_PORT = 25565;
 const BOT_USERNAME = 'Pumtrummod'; 
 const PASSWORD = 'manhne11'; 
 
-// ✅ Cập nhật phiên bản theo khuyến nghị của KingMC
+// ✅ SỬA LỖI: Thử nghiệm phiên bản (nếu 1.21.11 vẫn lỗi, đổi thành 1.21.4)
 const BOT_VERSION = '1.21.11'; 
 const AUTH_MODE = 'offline'; 
 
@@ -45,13 +45,15 @@ function startBot() {
     auth: AUTH_MODE,
     hideErrors: true,
     checkTimeoutInterval: 120000,
-    // ✅ BẢN VÁ LỖI SOCKETCLOSED: Tắt physics lúc kết nối
+    
+    // ✅ BẢN VÁ QUAN TRỌNG: Vượt qua TCPShield và lỗi Physics
+    fakeHost: 'sgp.kingmc.vn', 
     physicsEnabled: false, 
   });
   
   globalBot = bot; 
 
-  // ✅ Bật lại physics sau khi đã vào sảnh chờ thành công
+  // Bật lại physics sau khi đã vào sảnh chờ thành công
   bot.once('spawn', () => {
     setTimeout(() => {
       if (!bot._ended) bot.physicsEnabled = true;
@@ -66,7 +68,6 @@ function startBot() {
     console.log(`✅ [LẦN ${joinAttempt}] Đã vào sảnh chờ!`);
     
     if (joinAttempt === 1) {
-      // Lần đầu tiên: Đợi 6 giây rồi tự out để lách anti-bot
       console.log(`⏳ [CHỐNG BOT] Đang ở bảng xác nhận. Tự động out sau 6 giây...`);
       setTimeout(() => {
         console.log(`🚪 Tự động ngắt kết nối (Quit).`);
@@ -76,13 +77,11 @@ function startBot() {
       if (hasLoggedIn) return;
       hasLoggedIn = true;
 
-      // Đăng nhập sau 3 giây
       setTimeout(() => {
         console.log(`[AUTH] Gửi lệnh đăng nhập: /dn ${PASSWORD}`);
         bot.chat(`/dn ${PASSWORD}`);
       }, 3000);
 
-      // Mở menu sau 8 giây
       setTimeout(() => {
         if (!isInMainServer) {
           console.log(`[GUI] Đang chọn ô đồng hồ (ô thứ 5) để mở Menu...`);
@@ -129,9 +128,9 @@ function startBot() {
     console.log(`❌ Bot ngắt kết nối. Lý do: ${reason}`);
     if (afkInterval) { clearInterval(afkInterval); afkInterval = null; }
     
-    // Tăng thời gian chờ lên 15 giây để tránh bị anti-bot chặn
-    console.log(`🔄 Tự động kết nối lại sau 60 giây...`);
-    setTimeout(startBot, 60000); 
+    // ✅ TĂNG THỜI GIAN CHỜ LÊN 120 GIÂY (2 PHÚT) ĐỂ TRÁNH ANTI-BOT
+    console.log(`🔄 Tự động kết nối lại sau 120 giây...`);
+    setTimeout(startBot, 120000); 
   });
   
   // Chống AFK
