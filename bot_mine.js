@@ -9,8 +9,8 @@ app.use(express.json());
 // ==========================================
 const SERVER_HOST = 'play.kingmc.vn'; 
 const SERVER_PORT = 25565;
-const BOT_USERNAME = 'Pumtrummod'; 
-const PASSWORD = 'manhne11'; 
+const BOT_USERNAME = 'BuilderSucVat'; 
+const PASSWORD = 'Zb7ZhMzgf9'; 
 const BOT_VERSION = '1.20.1'; 
 
 const DISCORD_WEBHOOK_URL = "http://ord-804768-2261.cldcode.host:24950/api/game_payment";
